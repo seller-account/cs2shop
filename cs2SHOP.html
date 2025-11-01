@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cs2ShopAccount - Аккаунты Steam</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #7209b7;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #4cc9f0;
+            --text: #2b2d42;
+            --border: #dee2e6;
+            --steam: #1b2838;
+            --admin: #ff6b6b;
+            --warning: #ffd166;
+        }
+
+        body {
+            background: var(--light);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* Agreement Modal */
+        .agreement-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .agreement-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .agreement-text {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        .agreement-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+        }
+
+        .agreement-checkbox input {
+            width: 18px;
+            height: 18px;
+            margin-top: 0.2rem;
+        }
+
+        .agreement-checkbox label {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+
+        .agreement-link {
+            color: var(--primary);
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin: 0.5rem 0;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 0;
+            border-bottom: 2px solid var(--border);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+        }
+
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        nav a:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .user-balance {
+            background: var(--success);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .nav-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .balance-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .steam-login-btn {
+            background: linear-gradient(135deg, var(--steam), #2a475e);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .steam-login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .admin-btn {
+            background: linear-gradient(135deg, var(--admin), #ff5252);
+        }
+
+        /* Auth Modal */
+        .auth-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .auth-modal.active {
+            display: flex;
+        }
+
+        .auth-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            margin: 0.5rem 0;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .auth-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .auth-btn {
+            background: linear-gradient(135deg, var(--steam), #2a475e);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 3rem;
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Account Cards */
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+            justify-content: center;
+        }
+
+        .account-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .account-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        .account-badge {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .account-price {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 1rem 0;
+        }
+
+        .account-description {
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        .buy-btn {
+            background: linear-gradient(135deg, var(--success), var(--primary));
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .buy-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .buy-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        /* Wheel Modal */
+        .wheel-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .wheel-modal.active {
+            display: flex;
+        }
+
+        .wheel-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 2rem auto;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            transition: transform 3s cubic-bezier(0.2, 0.8, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wheel-sector {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .wheel-prize-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.95);
+            padding: 1rem 2rem;
+            border-radius: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .wheel-prize-display.active {
+            display: block;
+            animation: prizePopup 0.5s ease-out;
+        }
+
+        @keyframes prizePopup {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            70% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 40px;
+            background: #2c3e50;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            z-index: 2;
+        }
+
+        .wheel-spin-btn {
+            background: linear-gradient(135deg, #ff6b6b, #f9ca24);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .wheel-spin-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+
+        .wheel-spin-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .wheel-cooldown {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Balance Modal */
+        .balance-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .balance-modal.active {
+            display: flex;
+        }
+
+        .balance-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .balance-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            border-left: 4px solid var(--success);
+        }
+
+        /* Admin Panel */
+        .admin-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            z-index: 1001;
+            display: none;
+        }
+
+        .admin-panel.active {
+            display: block;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .users-table th, .users-table td {
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            text-align: left;
+        }
+
+        .users-table th {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Full Agreement Modal */
+        .full-agreement-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .full-agreement-modal.active {
+            display: flex;
+        }
+
+        .full-agreement-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        /* Notification System */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 1002;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #4CAF50;
+        }
+
+        .notification.error {
+            background: #f44336;
+        }
+
+        .notification.warning {
+            background: #ff9800;
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            nav ul {
+                gap: 1rem;
+            }
+            
+            .accounts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .notification {
+                left: 20px;
+                right: 20px;
+                max-width: none;
+                transform: translateY(-100px);
+            }
+
+            .notification.show {
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Система уведомлений -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Полное пользовательское соглашение -->
+    <div class="full-agreement-modal" id="fullAgreementModal">
+        <div class="full-agreement-content">
+            <h2 style="color: var(--primary); margin-bottom: 1rem;">📋 Полное пользовательское соглашение</h2>
+            <div style="line-height: 1.6; margin-bottom: 2rem;">
+                <h3>1. Общие положения</h3>
+                <p>1.1. Настоящее Пользовательское соглашение (далее — Соглашение) регулирует отношения между Администрацией платформы "Cs2ShopAccount" (далее — Продавец) и Пользователем (далее — Покупатель) по приобретению игровых аккаунтов.</p>
+                
+                <h3>2. Предмет соглашения</h3>
+                <p>2.1. Продавец обязуется передать Покупателю права на использование игровых аккаунтов, а Покупатель обязуется принять и оплатить их.</p>
+                
+                <h3>3. Порядок приобретения аккаунтов</h3>
+                <p>3.1. Покупатель выбирает товар и вносит оплату согласно указанным ценам.</p>
+                <p>3.2. После подтверждения оплаты Покупатель получает данные от аккаунта.</p>
+                
+                <h3>4. Гарантии и ответственность</h3>
+                <p>4.1. Продавец гарантирует работоспособность аккаунтов на момент продажи.</p>
+                <p>4.2. Покупатель обязуется не нарушать правила игровых платформ.</p>
+                
+                <h3>5. Конфиденциальность</h3>
+                <p>5.1. Все данные Покупателя защищены и не передаются третьим лицам.</p>
+            </div>
+            <button class="steam-login-btn" style="width: 100%;" onclick="closeFullAgreement()">
+                Закрыть
+            </button>
+        </div>
+    </div>
+
+    <!-- Основное соглашение -->
+    <div class="agreement-modal" id="agreementModal">
+        <div class="agreement-content">
+            <h2 style="color: var(--primary); margin-bottom: 1rem;">📋 Пользовательское соглашение</h2>
+            
+            <div class="agreement-text">
+                <p><strong>Условия использования платформы Cs2ShopAccount</strong></p>
+                
+                <p>Настоящее Пользовательское соглашение регулирует отношения между Администрацией платформы 
+                "Cs2ShopAccount" и Пользователем и определяет условия использования цифровой площадки.</p>
+
+                <p>Используя функционал платформы, Пользователь подтверждает свое полное и безоговорочное согласие 
+                со всеми положениями настоящего Соглашения.</p>
+
+                <span class="agreement-link" onclick="openFullAgreement()">▶️ Полный текст пользовательского соглашения</span>
+
+                <p style="color: #666; font-size: 0.8rem; margin-top: 1rem;">
+                *Нажимая кнопку "Принять", Вы подтверждаете, что полностью ознакомились с условиями Соглашения 
+                и принимаете на себя полную ответственность за свои действия на платформе.
+                </p>
+            </div>
+
+            <div class="agreement-checkbox">
+                <input type="checkbox" id="agreeCheckbox">
+                <label for="agreeCheckbox">Я полностью прочитал(а) пользовательское соглашение и со всем согласен(на)</label>
+            </div>
+
+            <button class="steam-login-btn" style="width: 100%;" onclick="acceptAgreement()" id="acceptBtn" disabled>
+                Принять и продолжить
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно авторизации -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-content">
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="switchAuthTab('steam')">Steam OpenID</div>
+                <div class="auth-tab" onclick="switchAuthTab('manual')">Логин/Пароль</div>
+            </div>
+
+            <!-- Steam OpenID форма -->
+            <div class="auth-form active" id="steamForm">
+                <h2 style="color: var(--steam); margin-bottom: 1rem;">🔥 Вход через Steam</h2>
+                <p style="margin-bottom: 1rem; color: #666;">Безопасный вход через официальный Steam</p>
+                <button class="auth-btn" onclick="demoSteamLogin()" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <span>🔥</span> Войти через Steam (Демо)
+                </button>
+                <p style="font-size: 0.8rem; color: #666; margin-top: 1rem;">
+                    ⚠️ В демо-версии используется имитация входа. В реальном проекте будет работать настоящий Steam OpenID.
+                </p>
+            </div>
+
+            <!-- Ручная авторизация форма -->
+            <div class="auth-form" id="manualForm">
+                <h2 style="color: var(--primary); margin-bottom: 1rem;">🔐 Вход по логину/паролю</h2>
+                <input type="text" class="auth-input" id="loginInput" placeholder="Логин Steam">
+                <input type="password" class="auth-input" id="passwordInput" placeholder="Пароль Steam">
+                <button class="auth-btn" onclick="manualLogin()">Войти</button>
+                <div style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-radius: 10px; border-left: 4px solid #ffc107;">
+                    <p style="font-size: 0.8rem; color: #856404; margin: 0;">
+                        <strong>Тестовые аккаунты:</strong><br>
+                        Логин: user123 | Пароль: pass123<br>
+                        Логин: Facit2010 | Пароль: nikita2010Zxc (Админ)
+                    </p>
+                </div>
+            </div>
+
+            <button class="nav-btn" style="background: #6c757d; margin-top: 0.5rem; width: 100%;" onclick="closeAuthModal()">
+                Отмена
+            </button>
+        </div>
+    </div>
+
+    <!-- Админ панель -->
+    <div class="admin-panel" id="adminPanel">
+        <h2 style="color: var(--admin); margin-bottom: 1rem;">⚙️ База данных пользователей</h2>
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+            <button class="nav-btn" onclick="exportUsersData()">📊 Экспорт данных</button>
+            <button class="nav-btn" onclick="clearAllData()">🗑️ Очистить все данные</button>
+        </div>
+        <table class="users-table" id="usersTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Логин</th>
+                    <th>Пароль</th>
+                    <th>SteamID</th>
+                    <th>Баланс</th>
+                    <th>Дата регистрации</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                <!-- Данные загружаются через JS -->
+            </tbody>
+        </table>
+        <button class="nav-btn" style="background: #6c757d; margin-top: 1rem;" onclick="closeAdminPanel()">
+            Закрыть
+        </button>
+    </div>
+
+    <!-- Модальное окно пополнения баланса -->
+    <div class="balance-modal" id="balanceModal">
+        <div class="balance-content">
+            <h2 style="color: #4CAF50; margin-bottom: 1rem;">💳 Пополнение баланса</h2>
+            
+            <div class="balance-info">
+                <p><strong>Укажите Логин: Facit88</strong></p>
+                <p>После покупки киньте скриншот в телеграмм</p>
+                <p><strong>@Nikita28us</strong></p>
+                <p>для получения товара</p>
+            </div>
+
+            <div style="margin: 1rem 0;">
+                <label style="display: block; text-align: left; margin-bottom: 0.5rem; font-weight: bold;">Сумма пополнения:</label>
+                <input type="number" class="auth-input" id="topupAmount" placeholder="Введите сумму" min="100" value="500">
+            </div>
+
+            <button class="nav-btn balance-btn" style="width: 100%;" onclick="goToPayment()">
+                💳 Пополнить на <span id="topupDisplay">500</span> ₽
+            </button>
+            <button class="nav-btn" style="background: #6c757d; margin-top: 0.5rem; width: 100%;" onclick="closeBalanceModal()">
+                Отмена
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно колеса удачи -->
+    <div class="wheel-modal" id="wheelModal">
+        <div class="wheel-content">
+            <h2 style="color: var(--primary); margin-bottom: 1rem;">🎡 Колесо удачи</h2>
+            <p>Крутите колесо и получайте бонусы на баланс! Доступно 1 раз в неделю.</p>
+            
+            <div class="wheel-container">
+                <div class="wheel-pointer"></div>
+                <div class="wheel" id="wheel">
+                    <div class="wheel-prize-display" id="wheelPrizeDisplay">
+                        <div id="prizeAmount">0 ₽</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="wheel-spin-btn" id="spinBtn" onclick="spinWheel()">
+                🎡 Крутить колесо
+            </button>
+            <div class="wheel-cooldown" id="wheelCooldown"></div>
+            
+            <button class="nav-btn" style="background: #6c757d; margin-top: 1rem;" onclick="closeWheelModal()">
+                Закрыть
+            </button>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div id="mainContent" style="display: none;">
+        <header>
+            <div class="nav-container">
+                <div class="logo">Cs2Shop<span>Account</span></div>
+                <nav>
+                    <ul>
+                        <li><a onclick="openWheelModal()">🎡 Колесо удачи</a></li>
+                        <li><a onclick="showSupport()">🛟 Поддержка</a></li>
+                        <li><a onclick="showPurchased()">📦 Мои покупки</a></li>
+                    </ul>
+                </nav>
+                <div class="header-actions">
+                    <div class="user-balance" id="userBalance">Баланс: 0 ₽</div>
+                    <button class="nav-btn balance-btn" onclick="openBalanceModal()">
+                        💳 Пополнить
+                    </button>
+                    <button class="nav-btn admin-btn" id="adminPanelBtn" style="display: none;" onclick="openAdminPanel()">
+                        📊 База данных
+                    </button>
+                    <button class="steam-login-btn" onclick="openAuthModal()" id="loginBtn">
+                        🔐 Войти
+                    </button>
+                    <button class="nav-btn" style="background: #6c757d; display: none;" id="logoutBtn" onclick="logout()">
+                        🚪 Выйти
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="container">
+            <section class="hero">
+                <h1>🚀 Премиум аккаунты Steam</h1>
+                <p>Лучшие игровые аккаунты по выгодным ценам</p>
+                <div style="margin-top: 1rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <div style="background: #e7f3ff; padding: 0.5rem 1rem; border-radius: 20px; color: var(--primary); font-weight: 600;">
+                        ✅ Гарантия качества
+                    </div>
+                    <div style="background: #f0f8ff; padding: 0.5rem 1rem; border-radius: 20px; color: var(--accent); font-weight: 600;">
+                        🔐 Безопасно
+                    </div>
+                    <div style="background: #f0fff0; padding: 0.5rem 1rem; border-radius: 20px; color: #4CAF50; font-weight: 600;">
+                        ⚡ Мгновенная доставка
+                    </div>
+                </div>
+            </section>
+
+            <section id="accounts">
+                <h2 style="text-align: center; margin-bottom: 2rem; color: var(--primary);">🎮 Аккаунты Steam</h2>
+                
+                <div class="accounts-grid">
+                    <div class="account-card">
+                        <div class="account-badge">PraimCs2</div>
+                        <div class="account-description">
+                            <strong>В комплекте:</strong><br>
+                            • CS2 с Prime статусом<br>
+                            • 1 случайная игра из библиотеки<br>
+                            • Аккаунт с надежной историей<br>
+                            • Гарантия 30 дней
+                        </div>
+                        <div class="account-price">500 ₽</div>
+                        <button class="buy-btn" onclick="buyAccount('PraimCs2')">Купить сейчас</button>
+                    </div>
+
+                    <div class="account-card">
+                        <div class="account-badge">Other Games</div>
+                        <div class="account-description">
+                            <strong>В комплекте:</strong><br>
+                            • Baldur's Gate 3 или Elden Ring<br>
+                            • Hades и другие инди-хиты<br>
+                            • От 100 до 1000 рублей на балансе<br>
+                            • Коллекция из 5+ игр
+                        </div>
+                        <div class="account-price">1000 ₽</div>
+                        <div style="background: #ff6b6b; color: white; padding: 0.5rem; border-radius: 10px; margin: 1rem 0; text-align: center;">
+                            ⚠️ Временно нет в наличии
+                        </div>
+                        <button class="buy-btn" disabled>Не доступно</button>
+                    </div>
+
+                    <div class="account-card">
+                        <div class="account-badge" style="background: linear-gradient(135deg, #ff6b6b, #ff5252);">Premium Pack</div>
+                        <div class="account-description">
+                            <strong>Премиум пакет:</strong><br>
+                            • CS2 Prime + 5 топовых игр<br>
+                            • 2000+ рублей на балансе<br>
+                            • 10+ летняя история аккаунта<br>
+                            • Премиум поддержка 24/7
+                        </div>
+                        <div class="account-price">2500 ₽</div>
+                        <div style="background: #4CAF50; color: white; padding: 0.5rem; border-radius: 10px; margin: 1rem 0; text-align: center;">
+                            🔥 Хит продаж
+                        </div>
+                        <button class="buy-btn" onclick="buyAccount('Premium Pack')">Купить сейчас</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Улучшенная база данных пользователей
+        let usersDatabase = JSON.parse(localStorage.getItem('cs2shop_users')) || [];
+        let currentUser = JSON.parse(localStorage.getItem('cs2shop_current_user')) || null;
+        let systemActive = localStorage.getItem('cs2shop_agreement_accepted') === 'true';
+        let userIdCounter = parseInt(localStorage.getItem('cs2shop_user_id')) || 1;
+
+        // Призы для колеса
+        const wheelPrizes = [10, 20, 30, 40, 50, 100, 200, 500];
+        const wheelColors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7'];
+
+        // Админ аккаунт
+        const ADMIN_STEAM_ID = "76561199615983836";
+
+        // Имитация проверки Steam аккаунтов
+        const validSteamAccounts = [
+            { login: "user123", password: "pass123", steamId: "76561197960287930" },
+            { login: "gamer2024", password: "game2024", steamId: "76561197960287931" },
+            { login: "cs2player", password: "cs2pass", steamId: "76561197960287932" },
+            { login: "Facit2010", password: "nikita2010Zxc", steamId: ADMIN_STEAM_ID }
+        ];
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            if (systemActive) {
+                initSystem();
+            }
+            
+            document.getElementById('agreeCheckbox').addEventListener('change', function() {
+                document.getElementById('acceptBtn').disabled = !this.checked;
+            });
+
+            // Обновление отображаемой суммы пополнения
+            document.getElementById('topupAmount').addEventListener('input', function() {
+                document.getElementById('topupDisplay').textContent = this.value || '0';
+            });
+
+            // Загрузка демо данных если база пустая
+            if (usersDatabase.length === 0) {
+                loadDemoData();
+            }
+        });
+
+        // Загрузка демо данных
+        function loadDemoData() {
+            const demoUsers = [
+                {
+                    id: 1,
+                    steamId: "76561197960287930",
+                    login: "user123",
+                    password: "pass123",
+                    balance: 150,
+                    registrationDate: new Date().toISOString(),
+                    isAdmin: false,
+                    authMethod: 'manual'
+                },
+                {
+                    id: 2,
+                    steamId: ADMIN_STEAM_ID,
+                    login: "Facit2010",
+                    password: "nikita2010Zxc",
+                    balance: 1000,
+                    registrationDate: new Date().toISOString(),
+                    isAdmin: true,
+                    authMethod: 'manual'
+                }
+            ];
+            
+            usersDatabase = demoUsers;
+            userIdCounter = 3;
+            saveDatabase();
+        }
+
+        // Система уведомлений
+        function showNotification(message, type = 'success', duration = 5000) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, duration);
+        }
+
+        // Переключение вкладок авторизации
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            
+            if (tab === 'steam') {
+                document.querySelector('.auth-tab:nth-child(1)').classList.add('active');
+                document.getElementById('steamForm').classList.add('active');
+            } else {
+                document.querySelector('.auth-tab:nth-child(2)').classList.add('active');
+                document.getElementById('manualForm').classList.add('active');
+            }
+        }
+
+        // Вход через Steam (демо версия)
+        function loginWithSteam(steamId, username) {
+            let user = usersDatabase.find(u => u.steamId === steamId);
+            
+            if (!user) {
+                user = {
+                    id: userIdCounter++,
+                    steamId: steamId,
+                    login: username || `SteamUser_${steamId.substring(0, 8)}`,
+                    balance: 0,
+                    registrationDate: new Date().toISOString(),
+                    isAdmin: steamId === ADMIN_STEAM_ID,
+                    authMethod: 'steam'
+                };
+                usersDatabase.push(user);
+                saveDatabase();
+            }
+
+            currentUser = user;
+            localStorage.setItem('cs2shop_current_user', JSON.stringify(user));
+            localStorage.setItem('cs2shop_user_id', userIdCounter.toString());
+            
+            showUserProfile();
+            closeAuthModal();
+            showNotification(`🔥 Добро пожаловать, ${user.login}!`, 'success');
+        }
+
+        // Ручная авторизация
+        function manualLogin() {
+            const login = document.getElementById('loginInput').value;
+            const password = document.getElementById('passwordInput').value;
+            
+            if (!login || !password) {
+                showNotification('Заполните все поля!', 'error');
+                return;
+            }
+
+            const validAccount = validSteamAccounts.find(acc => 
+                acc.login === login && acc.password === password
+            );
+
+            if (!validAccount) {
+                showNotification('❌ Неверный логин или пароль! Аккаунт не найден.', 'error');
+                return;
+            }
+
+            loginWithSteam(validAccount.steamId, login);
+            
+            const userIndex = usersDatabase.findIndex(u => u.steamId === validAccount.steamId);
+            if (userIndex !== -1) {
+                usersDatabase[userIndex].password = password;
+                usersDatabase[userIndex].authMethod = 'manual';
+                saveDatabase();
+            }
+        }
+
+        // Демо Steam вход
+        function demoSteamLogin() {
+            const demoSteamId = "7656119" + Math.floor(100000000000 + Math.random() * 900000000000);
+            const demoUsername = "SteamUser_" + Math.floor(Math.random() * 10000);
+            loginWithSteam(demoSteamId, demoUsername);
+        }
+
+        // Выход из системы
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('cs2shop_current_user');
+            showUserProfile();
+            showNotification('Вы вышли из системы', 'warning');
+        }
+
+        // Функции соглашения
+        function openFullAgreement() {
+            document.getElementById('fullAgreementModal').classList.add('active');
+        }
+
+        function closeFullAgreement() {
+            document.getElementById('fullAgreementModal').classList.remove('active');
+        }
+
+        function acceptAgreement() {
+            localStorage.setItem('cs2shop_agreement_accepted', 'true');
+            document.getElementById('agreementModal').style.display = 'none';
+            initSystem();
+            showNotification('Соглашение принято! Добро пожаловать!', 'success');
+        }
+
+        // Инициализация системы
+        function initSystem() {
+            document.getElementById('mainContent').style.display = 'block';
+            updateBalance();
+            createWheel();
+            
+            if (currentUser) {
+                showUserProfile();
+            }
+        }
+
+        // Показать профиль пользователя
+        function showUserProfile() {
+            if (currentUser) {
+                updateBalance();
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'block';
+                
+                if (currentUser.isAdmin) {
+                    document.getElementById('adminPanelBtn').style.display = 'block';
+                } else {
+                    document.getElementById('adminPanelBtn').style.display = 'none';
+                }
+            } else {
+                document.getElementById('userBalance').textContent = `Баланс: 0 ₽`;
+                document.getElementById('loginBtn').style.display = 'block';
+                document.getElementById('logoutBtn').style.display = 'none';
+                document.getElementById('adminPanelBtn').style.display = 'none';
+            }
+        }
+
+        // Обновление баланса
+        function updateBalance() {
+            if (currentUser) {
+                document.getElementById('userBalance').textContent = `Баланс: ${currentUser.balance} ₽`;
+            }
+        }
+
+        // Сохранение базы данных
+        function saveDatabase() {
+            localStorage.setItem('cs2shop_users', JSON.stringify(usersDatabase));
+            localStorage.setItem('cs2shop_user_id', userIdCounter.toString());
+        }
+
+        // Создание колеса удачи
+        function createWheel() {
+            const wheel = document.getElementById('wheel');
+            wheel.innerHTML = '';
+            
+            const sectorAngle = 360 / wheelPrizes.length;
+            
+            for (let i = 0; i < wheelPrizes.length; i++) {
+                const sector = document.createElement('div');
+                sector.className = 'wheel-sector';
+                sector.style.backgroundColor = wheelColors[i % wheelColors.length];
+                sector.style.transform = `rotate(${i * sectorAngle}deg) skewY(-${90 - sectorAngle}deg)`;
+                sector.innerHTML = `<div style="transform: skewY(${90 - sectorAngle}deg) rotate(${sectorAngle/2}deg);">${wheelPrizes[i]}₽</div>`;
+                wheel.appendChild(sector);
+            }
+        }
+
+        // Открыть/закрыть модальные окна
+        function openAuthModal() {
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+        }
+
+        function openBalanceModal() {
+            if (!currentUser) {
+                showNotification('Сначала войдите в аккаунт!', 'error');
+                openAuthModal();
+                return;
+            }
+            document.getElementById('balanceModal').classList.add('active');
+        }
+
+        function closeBalanceModal() {
+            document.getElementById('balanceModal').classList.remove('active');
+        }
+
+        function goToPayment() {
+            const amount = document.getElementById('topupAmount').value;
+            if (!amount || amount < 100) {
+                showNotification('Минимальная сумма пополнения 100 рублей', 'error');
+                return;
+            }
+            
+            // В реальном проекте здесь была бы интеграция с платежной системой
+            showNotification(`Перенаправление на страницу оплаты ${amount} рублей...`, 'warning');
+            
+            setTimeout(() => {
+                // Имитация успешной оплаты
+                currentUser.balance += parseInt(amount);
+                const userIndex = usersDatabase.findIndex(u => u.id === currentUser.id);
+                if (userIndex !== -1) {
+                    usersDatabase[userIndex] = currentUser;
+                    saveDatabase();
+                }
+                updateBalance();
+                closeBalanceModal();
+                showNotification(`✅ Баланс пополнен на ${amount} рублей!`, 'success');
+            }, 2000);
+        }
+
+        // Колесо удачи
+        function openWheelModal() {
+            if (!currentUser) {
+                showNotification('Сначала войдите в аккаунт!', 'error');
+                openAuthModal();
+                return;
+            }
+            document.getElementById('wheelModal').classList.add('active');
+            updateWheelCooldown();
+        }
+
+        function closeWheelModal() {
+            document.getElementById('wheelModal').classList.remove('active');
+        }
+
+        function updateWheelCooldown() {
+            const cooldownElement = document.getElementById('wheelCooldown');
+            const spinBtn = document.getElementById('spinBtn');
+            
+            if (!currentUser.lastSpinDate) {
+                cooldownElement.textContent = 'Доступно для вращения!';
+                spinBtn.disabled = false;
+                return;
+            }
+
+            const now = new Date();
+            const lastSpin = new Date(currentUser.lastSpinDate);
+            const nextSpin = new Date(lastSpin);
+            nextSpin.setDate(nextSpin.getDate() + 7);
+            
+            if (now >= nextSpin) {
+                cooldownElement.textContent = 'Доступно для вращения!';
+                spinBtn.disabled = false;
+            } else {
+                const daysLeft = Math.ceil((nextSpin - now) / (1000 * 60 * 60 * 24));
+                cooldownElement.textContent = `Следующее вращение через: ${daysLeft} дней`;
+                spinBtn.disabled = true;
+            }
+        }
+
+        function spinWheel() {
+            if (currentUser.lastSpinDate) {
+                const now = new Date();
+                const lastSpin = new Date(currentUser.lastSpinDate);
+                const nextSpin = new Date(lastSpin);
+                nextSpin.setDate(nextSpin.getDate() + 7);
+                
+                if (now < nextSpin) {
+                    showNotification('Вы уже крутили колесо на этой неделе!', 'error');
+                    return;
+                }
+            }
+
+            const wheel = document.getElementById('wheel');
+            const spinBtn = document.getElementById('spinBtn');
+            const prizeDisplay = document.getElementById('wheelPrizeDisplay');
+            const prizeAmount = document.getElementById('prizeAmount');
+            
+            spinBtn.disabled = true;
+            
+            const prizeIndex = Math.floor(Math.random() * wheelPrizes.length);
+            const prize = wheelPrizes[prizeIndex];
+            
+            const totalRotation = 1080 + (prizeIndex * (360 / wheelPrizes.length));
+            wheel.style.transform = `rotate(${totalRotation}deg)`;
+            
+            setTimeout(() => {
+                prizeAmount.textContent = `${prize} ₽`;
+                prizeDisplay.classList.add('active');
+                
+                currentUser.balance += prize;
+                currentUser.lastSpinDate = new Date().toISOString();
+                
+                const userIndex = usersDatabase.findIndex(u => u.id === currentUser.id);
+                if (userIndex !== -1) {
+                    usersDatabase[userIndex] = currentUser;
+                    saveDatabase();
+                }
+                
+                updateBalance();
+                updateWheelCooldown();
+                showNotification(`🎉 Поздравляем! Вы выиграли ${prize} рублей!`, 'success');
+                
+            }, 3000);
+        }
+
+        // Админ панель
+        function openAdminPanel() {
+            if (!currentUser || !currentUser.isAdmin) {
+                showNotification('Доступ запрещен!', 'error');
+                return;
+            }
+            loadUsersTable();
+            document.getElementById('adminPanel').classList.add('active');
+        }
+
+        function closeAdminPanel() {
+            document.getElementById('adminPanel').classList.remove('active');
+        }
+
+        function loadUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = usersDatabase.map(user => `
+                <tr>
+                    <td>${user.id}</td>
+                    <td>${user.login}</td>
+                    <td>${user.password || 'Steam Auth'}</td>
+                    <td>${user.steamId}</td>
+                    <td>${user.balance} ₽</td>
+                    <td>${new Date(user.registrationDate).toLocaleDateString()}</td>
+                    <td>
+                        <button class="nav-btn" style="background: #4CAF50; padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="addBalance(${user.id}, 100)">
+                            +100
+                        </button>
+                        <button class="nav-btn" style="background: #ff9800; padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="editUser(${user.id})">
+                            ✏️
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function addBalance(userId, amount) {
+            const user = usersDatabase.find(u => u.id === userId);
+            if (user) {
+                user.balance += amount;
+                saveDatabase();
+                loadUsersTable();
+                showNotification(`Баланс пользователя ${user.login} пополнен на ${amount} рублей`, 'success');
+            }
+        }
+
+        function editUser(userId) {
+            const user = usersDatabase.find(u => u.id === userId);
+            if (user) {
+                const newBalance = prompt(`Введите новый баланс для ${user.login}:`, user.balance);
+                if (newBalance !== null && !isNaN(newBalance)) {
+                    user.balance = parseInt(newBalance);
+                    saveDatabase();
+                    loadUsersTable();
+                    showNotification(`Баланс пользователя ${user.login} обновлен`, 'success');
+                }
+            }
+        }
+
+        function exportUsersData() {
+            const dataStr = JSON.stringify(usersDatabase, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'cs2shop_users.json';
+            link.click();
+            URL.revokeObjectURL(url);
+            showNotification('Данные экспортированы в JSON файл', 'success');
+        }
+
+        function clearAllData() {
+            if (confirm('ВНИМАНИЕ! Это удалит всех пользователей и сбросит систему. Продолжить?')) {
+                usersDatabase = [];
+                currentUser = null;
+                localStorage.clear();
+                showNotification('Все данные очищены', 'warning');
+                location.reload();
+            }
+        }
+
+        // Покупка аккаунта
+        function buyAccount(accountType) {
+            if (!currentUser) {
+                showNotification('Сначала войдите в аккаунт!', 'error');
+                openAuthModal();
+                return;
+            }
+
+            const price = getAccountPrice(accountType);
+            
+            if (currentUser.balance < price) {
+                showNotification('Недостаточно средств на балансе!', 'error');
+                openBalanceModal();
+                return;
+            }
+
+            if (confirm(`Вы точно хотите купить "${accountType}" за ${price}₽?`)) {
+                currentUser.balance -= price;
+                
+                const userIndex = usersDatabase.findIndex(u => u.id === currentUser.id);
+                if (userIndex !== -1) {
+                    usersDatabase[userIndex] = currentUser;
+                    saveDatabase();
+                }
+                
+                updateBalance();
+                
+                // Запись покупки
+                const purchase = {
+                    id: Date.now(),
+                    type: accountType,
+                    price: price,
+                    date: new Date().toISOString(),
+                    status: 'completed'
+                };
+                
+                let userPurchases = JSON.parse(localStorage.getItem(`cs2shop_purchases_${currentUser.id}`)) || [];
+                userPurchases.push(purchase);
+                localStorage.setItem(`cs2shop_purchases_${currentUser.id}`, JSON.stringify(userPurchases));
+                
+                showNotification(`🎉 Поздравляем с покупкой "${accountType}"!`, 'success');
+            }
+        }
+
+        function getAccountPrice(type) {
+            const prices = {
+                'PraimCs2': 500,
+                'Other Games': 1000,
+                'Premium Pack': 2500
+            };
+            return prices[type] || 0;
+        }
+
+        // Поддержка
+        function showSupport() {
+            alert('📞 Поддержка Cs2ShopAccount\n\n' +
+                  'По всем вопросам обращайтесь:\n' +
+                  'Telegram: @Nikita28us\n' +
+                  'Email: support@cs2shopaccount.com\n\n' +
+                  '⌚ Время работы: 24/7\n' +
+                  '⚡ Среднее время ответа: 5-15 минут');
+        }
+
+        // Мои покупки
+        function showPurchased() {
+            if (!currentUser) {
+                showNotification('Сначала войдите в аккаунт!', 'error');
+                return;
+            }
+            
+            const userPurchases = JSON.parse(localStorage.getItem(`cs2shop_purchases_${currentUser.id}`)) || [];
+            
+            if (userPurchases.length === 0) {
+                alert('📦 История покупок\n\nУ вас пока нет покупок. Сделайте первую покупку!');
+                return;
+            }
+            
+            let purchasesText = '📦 Ваши покупки:\n\n';
+            userPurchases.forEach(purchase => {
+                purchasesText += `🎮 ${purchase.type}\n`;
+                purchasesText += `💵 Цена: ${purchase.price} ₽\n`;
+                purchasesText += `📅 Дата: ${new Date(purchase.date).toLocaleDateString()}\n`;
+                purchasesText += `✅ Статус: ${purchase.status}\n\n`;
+            });
+            
+            alert(purchasesText);
+        }
+    </script>
+</body>
+</html>
